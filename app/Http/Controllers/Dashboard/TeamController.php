@@ -12,7 +12,7 @@
 namespace CachetHQ\Cachet\Http\Controllers\Dashboard;
 
 use AltThree\Validator\ValidationException;
-use CachetHQ\Cachet\Bus\Commands\User\AddUserCommand;
+use CachetHQ\Cachet\Bus\Commands\User\CreateUserCommand;
 use CachetHQ\Cachet\Bus\Commands\User\InviteUserCommand;
 use CachetHQ\Cachet\Bus\Commands\User\RemoveUserCommand;
 use CachetHQ\Cachet\Models\User;
@@ -80,20 +80,20 @@ class TeamController extends Controller
     public function postAddUser()
     {
         try {
-            dispatch(new AddUserCommand(
+            dispatch(new CreateUserCommand(
                 Binput::get('username'),
                 Binput::get('password'),
                 Binput::get('email'),
                 Binput::get('level')
             ));
         } catch (ValidationException $e) {
-            return cachet_route('dashboard.team.create')
+            return cachet_redirect('dashboard.team.create')
                 ->withInput(Binput::except('password'))
                 ->withTitle(sprintf('%s %s', trans('dashboard.notifications.whoops'), trans('dashboard.team.add.failure')))
                 ->withErrors($e->getMessageBag());
         }
 
-        return cachet_route('dashboard.team.create')
+        return cachet_redirect('dashboard.team.create')
             ->withSuccess(sprintf('%s %s', trans('dashboard.notifications.awesome'), trans('dashboard.team.add.success')));
     }
 
@@ -111,13 +111,13 @@ class TeamController extends Controller
         try {
             $user->update($userData);
         } catch (ValidationException $e) {
-            return cachet_route('dashboard.team.edit', [$user->id])
+            return cachet_redirect('dashboard.team.edit', [$user->id])
                 ->withInput($userData)
                 ->withTitle(sprintf('%s %s', trans('dashboard.notifications.whoops'), trans('dashboard.team.edit.failure')))
                 ->withErrors($e->getMessageBag());
         }
 
-        return cachet_route('dashboard.team.edit', [$user->id])
+        return cachet_redirect('dashboard.team.edit', [$user->id])
             ->withSuccess(sprintf('%s %s', trans('dashboard.notifications.awesome'), trans('dashboard.team.edit.success')));
     }
 
@@ -133,13 +133,13 @@ class TeamController extends Controller
                 array_unique(array_filter((array) Binput::get('emails')))
             ));
         } catch (ValidationException $e) {
-            return cachet_route('dashboard.team.invite')
+            return cachet_redirect('dashboard.team.invite')
                 ->withInput(Binput::except('password'))
                 ->withTitle(sprintf('%s %s', trans('dashboard.notifications.whoops'), trans('dashboard.team.invite.failure')))
                 ->withErrors($e->getMessageBag());
         }
 
-        return cachet_route('dashboard.team.invite')
+        return cachet_redirect('dashboard.team.invite')
             ->withSuccess(sprintf('%s %s', trans('dashboard.notifications.awesome'), trans('dashboard.team.invite.success')));
     }
 
@@ -154,7 +154,7 @@ class TeamController extends Controller
     {
         dispatch(new RemoveUserCommand($user));
 
-        return cachet_route('dashboard.team')
+        return cachet_redirect('dashboard.team')
             ->withSuccess(sprintf('%s %s', trans('dashboard.notifications.awesome'), trans('dashboard.team.delete.success')));
     }
 }

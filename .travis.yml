@@ -1,8 +1,6 @@
 language: php
 
 php:
-  - 5.5.9
-  - 5.5
   - 5.6
   - 7.0
   - 7.1
@@ -14,5 +12,8 @@ before_install:
   - if [[ $TRAVIS_PHP_VERSION != 7.1 ]] ; then phpenv config-rm xdebug.ini; fi
 
 install: travis_retry composer install --no-interaction --no-scripts --prefer-source --no-suggest
+
+notifications:
+  email: false
 
 script: vendor/bin/phpunit

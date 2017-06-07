@@ -12,10 +12,10 @@
 namespace CachetHQ\Cachet\Http\Controllers\Dashboard;
 
 use AltThree\Validator\ValidationException;
-use CachetHQ\Cachet\Bus\Commands\Component\AddComponentCommand;
+use CachetHQ\Cachet\Bus\Commands\Component\CreateComponentCommand;
 use CachetHQ\Cachet\Bus\Commands\Component\RemoveComponentCommand;
 use CachetHQ\Cachet\Bus\Commands\Component\UpdateComponentCommand;
-use CachetHQ\Cachet\Bus\Commands\ComponentGroup\AddComponentGroupCommand;
+use CachetHQ\Cachet\Bus\Commands\ComponentGroup\CreateComponentGroupCommand;
 use CachetHQ\Cachet\Bus\Commands\ComponentGroup\RemoveComponentGroupCommand;
 use CachetHQ\Cachet\Bus\Commands\ComponentGroup\UpdateComponentGroupCommand;
 use CachetHQ\Cachet\Models\Component;
@@ -134,10 +134,12 @@ class ComponentController extends Controller
                 $componentData['link'],
                 $componentData['order'],
                 $componentData['group_id'],
-                $componentData['enabled']
+                $componentData['enabled'],
+                null, // Meta data cannot be supplied through the dashboard yet.
+                true // Silent since we're not really making changes to the component (this should be optional)
             ));
         } catch (ValidationException $e) {
-            return cachet_route('dashboard.components.edit', [$component->id])
+            return cachet_redirect('dashboard.components.edit', [$component->id])
                 ->withInput(Binput::all())
                 ->withTitle(sprintf('%s %s', trans('dashboard.notifications.whoops'), trans('dashboard.components.edit.failure')))
                 ->withErrors($e->getMessageBag());
@@ -153,7 +155,7 @@ class ComponentController extends Controller
 
         $component->tags()->sync($componentTags);
 
-        return cachet_route('dashboard.components.edit', [$component->id])
+        return cachet_redirect('dashboard.components.edit', [$component->id])
             ->withSuccess(sprintf('%s %s', trans('dashboard.notifications.awesome'), trans('dashboard.components.edit.success')));
     }
 
@@ -180,17 +182,18 @@ class ComponentController extends Controller
         $tags = array_pull($componentData, 'tags');
 
         try {
-            $component = dispatch(new AddComponentCommand(
+            $component = dispatch(new CreateComponentCommand(
                 $componentData['name'],
                 $componentData['description'],
                 $componentData['status'],
                 $componentData['link'],
                 $componentData['order'],
                 $componentData['group_id'],
-                $componentData['enabled']
+                $componentData['enabled'],
+                null // Meta data cannot be supplied through the dashboard yet.
             ));
         } catch (ValidationException $e) {
-            return cachet_route('dashboard.components.create')
+            return cachet_redirect('dashboard.components.create')
                 ->withInput(Binput::all())
                 ->withTitle(sprintf('%s %s', trans('dashboard.notifications.whoops'), trans('dashboard.components.add.failure')))
                 ->withErrors($e->getMessageBag());
@@ -206,7 +209,7 @@ class ComponentController extends Controller
 
         $component->tags()->sync($componentTags);
 
-        return cachet_route('dashboard.components')
+        return cachet_redirect('dashboard.components')
             ->withSuccess(sprintf('%s %s', trans('dashboard.notifications.awesome'), trans('dashboard.components.add.success')));
     }
 
@@ -221,7 +224,7 @@ class ComponentController extends Controller
     {
         dispatch(new RemoveComponentCommand($component));
 
-        return cachet_route('dashboard.components')
+        return cachet_redirect('dashboard.components')
             ->withSuccess(sprintf('%s %s', trans('dashboard.notifications.awesome'), trans('dashboard.components.delete.success')));
     }
 
@@ -236,7 +239,7 @@ class ComponentController extends Controller
     {
         dispatch(new RemoveComponentGroupCommand($group));
 
-        return cachet_route('dashboard.components.groups')
+        return cachet_redirect('dashboard.components.groups')
             ->withSuccess(sprintf('%s %s', trans('dashboard.notifications.awesome'), trans('dashboard.components.delete.success')));
     }
 
@@ -273,20 +276,20 @@ class ComponentController extends Controller
     public function postAddComponentGroup()
     {
         try {
-            $group = dispatch(new AddComponentGroupCommand(
+            $group = dispatch(new CreateComponentGroupCommand(
                 Binput::get('name'),
                 Binput::get('order', 0),
                 Binput::get('collapsed'),
                 Binput::get('visible')
             ));
         } catch (ValidationException $e) {
-            return cachet_route('dashboard.components.groups.create')
+            return cachet_redirect('dashboard.components.groups.create')
                 ->withInput(Binput::all())
                 ->withTitle(sprintf('%s %s', trans('dashboard.notifications.whoops'), trans('dashboard.components.groups.add.failure')))
                 ->withErrors($e->getMessageBag());
         }
 
-        return cachet_route('dashboard.components.groups')
+        return cachet_redirect('dashboard.components.groups')
             ->withSuccess(sprintf('%s %s', trans('dashboard.notifications.awesome'), trans('dashboard.components.groups.add.success')));
     }
 
@@ -308,13 +311,13 @@ class ComponentController extends Controller
                 Binput::get('visible')
             ));
         } catch (ValidationException $e) {
-            return cachet_route('dashboard.components.groups.edit', [$group->id])
+            return cachet_redirect('dashboard.components.groups.edit', [$group->id])
                 ->withInput(Binput::all())
                 ->withTitle(sprintf('%s %s', trans('dashboard.notifications.whoops'), trans('dashboard.components.groups.edit.failure')))
                 ->withErrors($e->getMessageBag());
         }
 
-        return cachet_route('dashboard.components.groups.edit', [$group->id])
+        return cachet_redirect('dashboard.components.groups.edit', [$group->id])
             ->withSuccess(sprintf('%s %s', trans('dashboard.notifications.awesome'), trans('dashboard.components.groups.edit.success')));
     }
 }

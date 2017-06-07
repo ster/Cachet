@@ -11,12 +11,15 @@
 
 namespace CachetHQ\Cachet\Http\Controllers\Dashboard;
 
+use CachetHQ\Cachet\Bus\Commands\System\Config\UpdateConfigCommand;
 use CachetHQ\Cachet\Integrations\Contracts\Credits;
 use CachetHQ\Cachet\Models\User;
+use CachetHQ\Cachet\Notifications\System\SystemTestNotification;
 use CachetHQ\Cachet\Settings\Repository;
 use Exception;
 use GrahamCampbell\Binput\Facades\Binput;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Log;
@@ -94,6 +97,12 @@ class SettingsController extends Controller
                 'title'  => trans('dashboard.settings.credits.credits'),
                 'url'    => cachet_route('dashboard.settings.credits'),
                 'icon'   => 'ion-ios-list',
+                'active' => false,
+            ],
+            'mail' => [
+                'title'  => trans('dashboard.settings.mail.mail'),
+                'url'    => cachet_route('dashboard.settings.mail'),
+                'icon'   => 'ion-paper-airplane',
                 'active' => false,
             ],
             'about' => [
@@ -200,7 +209,7 @@ class SettingsController extends Controller
     {
         $this->subMenu['security']['active'] = true;
 
-        $unsecureUsers = User::whereNull('google_2fa_secret')->orWhere('google_2fa_secret', '')->get();
+        $unsecureUsers = User::whereNull('google_2fa_secret')->orWhere('google_2fa_secret', '=', '')->get();
 
         Session::flash('redirect_to', $this->subMenu['security']['url']);
 
@@ -261,9 +270,54 @@ class SettingsController extends Controller
 
         $log = Log::getMonolog();
 
-        $logContents = file_get_contents($log->getHandlers()[0]->getUrl());
+        if (file_exists($path = $log->getHandlers()[0]->getUrl())) {
+            $logContents = file_get_contents($path);
+        } else {
+            $logContents = '';
+        }
 
         return View::make('dashboard.settings.log')->withLog($logContents)->withSubMenu($this->subMenu);
+    }
+
+    /**
+     * Show the mail settings view.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function showMailView()
+    {
+        $this->subMenu['mail']['active'] = true;
+
+        return View::make('dashboard.settings.mail')->withConfig(Config::get('mail'));
+    }
+
+    /**
+     * Test the mail config.
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function testMail()
+    {
+        Auth::user()->notify(new SystemTestNotification());
+
+        return cachet_redirect('dashboard.settings.mail')
+            ->withSuccess(trans('dashboard.notifications.awesome'));
+    }
+
+    /**
+     * Handle updating of the settings.
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function postMail()
+    {
+        $config = Binput::get('config');
+
+        dispatch(new UpdateConfigCommand($config));
+
+        return cachet_redirect('dashboard.settings.mail')
+            ->withInput(Binput::all())
+            ->withSuccess(trans('dashboard.notifications.awesome'));
     }
 
     /**

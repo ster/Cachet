@@ -11,7 +11,7 @@
 
 namespace CachetHQ\Cachet\Http\Controllers\Api;
 
-use CachetHQ\Cachet\Bus\Commands\Metric\AddMetricCommand;
+use CachetHQ\Cachet\Bus\Commands\Metric\CreateMetricCommand;
 use CachetHQ\Cachet\Bus\Commands\Metric\RemoveMetricCommand;
 use CachetHQ\Cachet\Bus\Commands\Metric\UpdateMetricCommand;
 use CachetHQ\Cachet\Models\Metric;
@@ -76,7 +76,7 @@ class MetricController extends AbstractApiController
     public function postMetrics()
     {
         try {
-            $metric = dispatch(new AddMetricCommand(
+            $metric = dispatch(new CreateMetricCommand(
                 Binput::get('name'),
                 Binput::get('suffix'),
                 Binput::get('description'),
@@ -86,7 +86,8 @@ class MetricController extends AbstractApiController
                 Binput::get('places', 2),
                 Binput::get('default_view', Binput::get('view', 1)),
                 Binput::get('threshold', 5),
-                Binput::get('order', 0)
+                Binput::get('order', 0),
+                Binput::get('visible', 1)
             ));
         } catch (QueryException $e) {
             throw new BadRequestHttpException();
@@ -116,7 +117,8 @@ class MetricController extends AbstractApiController
                 Binput::get('places'),
                 Binput::get('default_view', Binput::get('view')),
                 Binput::get('threshold'),
-                Binput::get('order')
+                Binput::get('order'),
+                Binput::get('visible')
             ));
         } catch (QueryException $e) {
             throw new BadRequestHttpException();

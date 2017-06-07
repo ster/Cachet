@@ -58,7 +58,7 @@ class AuthController extends Controller
             if (Auth::user()->hasTwoFactor) {
                 Session::put('2fa_id', Auth::user()->id);
 
-                return cachet_route('auth.two-factor');
+                return cachet_redirect('auth.two-factor');
             }
 
             Auth::attempt($loginData, $rememberUser);
@@ -68,7 +68,7 @@ class AuthController extends Controller
             return Redirect::intended(cachet_route('dashboard'));
         }
 
-        return cachet_route('auth.login')
+        return cachet_redirect('auth.login')
             ->withInput(Binput::except('password'))
             ->withError(trans('forms.login.invalid'));
     }
@@ -94,7 +94,7 @@ class AuthController extends Controller
     {
         // Check that we have a session.
         if ($userId = Session::pull('2fa_id')) {
-            $code = Binput::get('code');
+            $code = str_replace(' ', '', Binput::get('code'));
 
             // Maybe a temp login here.
             Auth::loginUsingId($userId);
@@ -113,11 +113,11 @@ class AuthController extends Controller
                 // Failed login, log back out.
                 Auth::logout();
 
-                return cachet_route('auth.login')->withError(trans('forms.login.invalid-token'));
+                return cachet_redirect('auth.login')->withError(trans('forms.login.invalid-token'));
             }
         }
 
-        return cachet_route('auth.login')->withError(trans('forms.login.invalid-token'));
+        return cachet_redirect('auth.login')->withError(trans('forms.login.invalid-token'));
     }
 
     /**

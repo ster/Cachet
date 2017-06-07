@@ -11,7 +11,7 @@
 
 namespace CachetHQ\Cachet\Http\Controllers\Api;
 
-use CachetHQ\Cachet\Bus\Commands\Component\AddComponentCommand;
+use CachetHQ\Cachet\Bus\Commands\Component\CreateComponentCommand;
 use CachetHQ\Cachet\Bus\Commands\Component\RemoveComponentCommand;
 use CachetHQ\Cachet\Bus\Commands\Component\UpdateComponentCommand;
 use CachetHQ\Cachet\Models\Component;
@@ -70,14 +70,15 @@ class ComponentController extends AbstractApiController
     public function postComponents()
     {
         try {
-            $component = dispatch(new AddComponentCommand(
+            $component = dispatch(new CreateComponentCommand(
                 Binput::get('name'),
                 Binput::get('description'),
                 Binput::get('status'),
                 Binput::get('link'),
                 Binput::get('order'),
                 Binput::get('group_id'),
-                (bool) Binput::get('enabled', true)
+                (bool) Binput::get('enabled', true),
+                Binput::get('meta', null)
             ));
         } catch (QueryException $e) {
             throw new BadRequestHttpException();
@@ -118,7 +119,9 @@ class ComponentController extends AbstractApiController
                 Binput::get('link'),
                 Binput::get('order'),
                 Binput::get('group_id'),
-                (bool) Binput::get('enabled', true)
+                (bool) Binput::get('enabled', true),
+                Binput::get('meta', null),
+                (bool) Binput::get('silent', false)
             ));
         } catch (QueryException $e) {
             throw new BadRequestHttpException();

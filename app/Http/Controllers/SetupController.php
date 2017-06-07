@@ -11,10 +11,9 @@
 
 namespace CachetHQ\Cachet\Http\Controllers;
 
+use CachetHQ\Cachet\Bus\Commands\System\Config\UpdateConfigCommand;
 use CachetHQ\Cachet\Models\User;
 use CachetHQ\Cachet\Settings\Repository;
-use Dotenv\Dotenv;
-use Dotenv\Exception\InvalidPathException;
 use GrahamCampbell\Binput\Facades\Binput;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -259,49 +258,19 @@ class SetupController extends Controller
             $envData = array_pull($postData, 'env');
 
             // Write the env to the .env file.
-            foreach ($envData as $envKey => $envValue) {
-                $this->writeEnv($envKey, $envValue);
-            }
+            dispatch(new UpdateConfigCommand($envData));
 
             if (Request::ajax()) {
                 return Response::json(['status' => 1]);
             }
 
-            return cachet_route('dashboard');
+            return cachet_redirect('dashboard');
         }
 
         if (Request::ajax()) {
             return Response::json(['errors' => $v->getMessageBag()], 400);
         }
 
-        return cachet_route('setup')->withInput()->withErrors($v->getMessageBag());
-    }
-
-    /**
-     * Writes to the .env file with given parameters.
-     *
-     * @param string $key
-     * @param mixed  $value
-     *
-     * @return void
-     */
-    protected function writeEnv($key, $value)
-    {
-        $dir = app()->environmentPath();
-        $file = app()->environmentFile();
-        $path = "{$dir}/{$file}";
-
-        try {
-            (new Dotenv($dir, $file))->load();
-
-            $envKey = strtoupper($key);
-            $envValue = env($envKey) ?: 'null';
-
-            file_put_contents($path, str_replace(
-                $envKey.'='.$envValue, $envKey.'='.$value, file_get_contents($path)
-            ));
-        } catch (InvalidPathException $e) {
-            //
-        }
+        return cachet_redirect('setup')->withInput()->withErrors($v->getMessageBag());
     }
 }
